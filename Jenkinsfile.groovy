@@ -33,12 +33,13 @@ podTemplate(label: 'mypod', containers: [
                 }
                 def podName = podNameLine.substring(0, startIndex)
                 def containerPath = '/var/lib/grafana'
-                sh "${kc} exec ${podName} -- git -C '${containerPath}' config user.email \"jenkins@khinkali.ch\""
-                sh "${kc} exec ${podName} -- git -C '${containerPath}' config user.name \"Jenkins\""
-                sh "${kc} exec ${podName} -- git -C '${containerPath}' add --all"
-                sh "${kc} exec ${podName} -- git -C '${containerPath}' diff --quiet && ${kc} exec ${podName} -- git -C '${containerPath}' diff --staged --quiet || ${kc} exec ${podName} -- git -C '${containerPath}' commit -am 'new_version'"
+                def containerName = 'git-init'
+                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.email \"jenkins@khinkali.ch\""
+                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.name \"Jenkins\""
+                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' add --all"
+                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --quiet && ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --staged --quiet || ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' commit -am 'new_version'"
                 withCredentials([usernamePassword(credentialsId: 'bitbucket', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    sh "${kc} exec ${podName} -- git -C '${containerPath}' push https://${GIT_USERNAME}:${GIT_PASSWORD}@bitbucket.org/khinkali/grafana_backup"
+                    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' push https://${GIT_USERNAME}:${GIT_PASSWORD}@bitbucket.org/khinkali/grafana_backup"
                 }
             }
         }
