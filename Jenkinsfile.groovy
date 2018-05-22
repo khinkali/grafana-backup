@@ -33,7 +33,7 @@ podTemplate(label: 'mypod', containers: [
                 }
                 def podName = podNameLine.substring(0, startIndex)
                 def containerPath = '/var/lib/grafana'
-                def containerName = 'git-init'
+                def containerName = 'grafana'
                 sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.email \"jenkins@khinkali.ch\""
                 sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.name \"Jenkins\""
                 sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' add --all"
