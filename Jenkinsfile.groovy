@@ -1,10 +1,7 @@
 @Library('semantic_releasing') _
 
 podTemplate(label: 'mypod', containers: [
-        containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
-        containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.8.0', command: 'cat', ttyEnabled: true),
-        containerTemplate(name: 'curl', image: 'khinkali/jenkinstemplate:0.0.3', command: 'cat', ttyEnabled: true),
-        containerTemplate(name: 'maven', image: 'maven:3.5.2-jdk-8', command: 'cat', ttyEnabled: true)
+        containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl:v1.8.0', command: 'cat', ttyEnabled: true)
 ],
         volumes: [
                 hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
@@ -26,8 +23,9 @@ podTemplate(label: 'mypod', containers: [
             def containerPath = '/var/lib/grafana'
             def containerName = 'grafana'
             def podLabel = 'app=grafana'
+            def repositoryUrl = 'bitbucket.org/khinkali/grafana_backup'
             container('kubectl') {
-                backup(podLabel, containerName, containerPath, kc)
+                backup(podLabel, containerName, containerPath, kc, repositoryUrl)
             }
         }
 
