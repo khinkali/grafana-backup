@@ -19,6 +19,8 @@ podTemplate(label: 'mypod', containers: [
         ])
 
         stage('create backup') {
+            currentBuild.displayName = getTimeDateDisplayName()
+
             def kc = 'kubectl -n test'
             def containerPath = '/var/lib/grafana'
             def containerName = 'grafana'
