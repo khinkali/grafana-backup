@@ -16,7 +16,7 @@ podTemplate(label: 'mypod', containers: [
                                 numToKeepStr: '30'
                         )
                 ),
-                pipelineTriggers([cron('2 0 * * *')])
+                pipelineTriggers([cron('30 0 * * *')])
         ])
 
         stage('create backup') {
