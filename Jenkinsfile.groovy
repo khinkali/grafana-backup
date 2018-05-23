@@ -21,28 +21,49 @@ podTemplate(label: 'mypod', containers: [
 
         stage('create backup') {
             def kc = 'kubectl -n test'
+            def containerPath = '/var/lib/grafana'
+            def containerName = 'grafana'
+            def podLabel = 'app=grafana'
+            def repositoryCredentials = 'bitbucket'
+            def repositoryUrl = 'bitbucket.org/khinkali/grafana_backup'
+            def commitMessage = 'new_version'
+            def gitEmail = 'jenkins@khinkali.ch'
+            def gitName = 'Jenkins'
             container('kubectl') {
-                def jenkinsPods = sh(
-                        script: "${kc} get po -l app=grafana --no-headers",
-                        returnStdout: true
-                ).trim()
-                def podNameLine = jenkinsPods.split('\n')[0]
-                def startIndex = podNameLine.indexOf(' ')
-                if (startIndex == -1) {
-                    return
-                }
-                def podName = podNameLine.substring(0, startIndex)
-                def containerPath = '/var/lib/grafana'
-                def containerName = 'grafana'
-                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.email \"jenkins@khinkali.ch\""
-                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.name \"Jenkins\""
-                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' add --all"
-                sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --quiet && ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --staged --quiet || ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' commit -am 'new_version'"
-                withCredentials([usernamePassword(credentialsId: 'bitbucket', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' push https://${GIT_USERNAME}:${GIT_PASSWORD}@bitbucket.org/khinkali/grafana_backup"
-                }
+                createBackup(kc, podLabel, containerName, containerPath, gitEmail, gitName, commitMessage, repositoryCredentials, repositoryUrl)
             }
         }
 
     }
 }
+
+void createBackup(String kc,
+                  String podLabel,
+                  String containerName,
+                  String containerPath,
+                  String gitEmail,
+                  String gitName,
+                  String commitMessage,
+                  String repositoryCredentials,
+                  String repositoryUrl) {
+    def jenkinsPods = sh(
+            script: "${kc} get po -l ${podLabel} --no-headers",
+            returnStdout: true
+    ).trim()
+    def podNameLine = jenkinsPods.split('\n')[0]
+    def startIndex = podNameLine.indexOf(' ')
+    if (startIndex == -1) {
+        return
+    }
+    def podName = podNameLine.substring(0, startIndex)
+    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.email \"${gitEmail}\""
+    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.name \"${gitName}\""
+    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' add --all"
+    sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --quiet && ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --staged --quiet || ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' commit -am '${commitMessage}'"
+    withCredentials([usernamePassword(credentialsId: $ {
+        repositoryCredentials
+    }, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+        sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' push https://${GIT_USERNAME}:${GIT_PASSWORD}@${repositoryUrl}"
+    }
+}
+
