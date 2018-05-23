@@ -24,28 +24,23 @@ podTemplate(label: 'mypod', containers: [
             def containerPath = '/var/lib/grafana'
             def containerName = 'grafana'
             def podLabel = 'app=grafana'
-            def repositoryCredentials = 'bitbucket'
-            def repositoryUrl = 'bitbucket.org/khinkali/grafana_backup'
-            def commitMessage = 'new_version'
-            def gitEmail = 'jenkins@khinkali.ch'
-            def gitName = 'Jenkins'
             container('kubectl') {
-                createBackup(kc, podLabel, containerName, containerPath, gitEmail, gitName, commitMessage, repositoryCredentials, repositoryUrl)
+                createBackup(podLabel, containerName, containerPath, kc)
             }
         }
 
     }
 }
 
-void createBackup(String kc,
-                  String podLabel,
+void createBackup(String podLabel,
                   String containerName,
                   String containerPath,
-                  String gitEmail,
-                  String gitName,
-                  String commitMessage,
-                  String repositoryCredentials,
-                  String repositoryUrl) {
+                  String kc = 'kubectl',
+                  String gitEmail = 'jenkins@khinkali.ch',
+                  String gitName = 'Jenkins',
+                  String commitMessage = 'new_version',
+                  String repositoryCredentials = 'bitbucket',
+                  String repositoryUrl = 'bitbucket.org/khinkali/grafana_backup') {
     def jenkinsPods = sh(
             script: "${kc} get po -l ${podLabel} --no-headers",
             returnStdout: true
