@@ -60,9 +60,7 @@ void createBackup(String kc,
     sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' config user.name \"${gitName}\""
     sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' add --all"
     sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --quiet && ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' diff --staged --quiet || ${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' commit -am '${commitMessage}'"
-    withCredentials([usernamePassword(credentialsId: $ {
-        repositoryCredentials
-    }, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+    withCredentials([usernamePassword(credentialsId: repositoryCredentials, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
         sh "${kc} exec ${podName} -c ${containerName} -- git -C '${containerPath}' push https://${GIT_USERNAME}:${GIT_PASSWORD}@${repositoryUrl}"
     }
 }
