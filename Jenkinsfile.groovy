@@ -6,31 +6,35 @@ podTemplate(label: 'mypod', containers: [
         volumes: [
                 hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock'),
         ]) {
-    node('mypod') {
-        properties([
-                buildDiscarder(
-                        logRotator(artifactDaysToKeepStr: '',
-                                artifactNumToKeepStr: '',
-                                daysToKeepStr: '',
-                                numToKeepStr: '30'
-                        )
-                ),
-                pipelineTriggers([cron('30 0 * * *')])
-        ])
+    try {
+        node('mypod') {
+            properties([
+                    buildDiscarder(
+                            logRotator(artifactDaysToKeepStr: '',
+                                    artifactNumToKeepStr: '',
+                                    daysToKeepStr: '',
+                                    numToKeepStr: '30'
+                            )
+                    ),
+                    pipelineTriggers([cron('30 0 * * *')])
+            ])
 
-        stage('create backup') {
-            currentBuild.displayName = getTimeDateDisplayName()
+            stage('create backup') {
+                currentBuild.displayName = getTimeDateDisplayName()
 
-            def kc = 'kubectl -n test'
-            def containerPath = '/var/lib/grafana'
-            def containerName = 'grafana'
-            def podLabel = 'app=grafana'
-            def repositoryUrl = 'bitbucket.org/khinkali/grafana_backup'
-            container('kubectl') {
-                backup(podLabel, containerName, containerPath, repositoryUrl, kc)
+                def kc = 'kubectl -n test'
+                def containerPath = '/var/lib/grafana'
+                def containerName = 'grafana'
+                def podLabel = 'app=grafana'
+                def repositoryUrl = 'bitbucket.org/khinkali/grafana_backup'
+                container('kubectl') {
+                    backup(podLabel, containerName, containerPath, repositoryUrl, kc)
+                }
             }
-        }
 
+        }
+    } catch (all) {
+        slackSend "Build Failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
     }
 }
 
